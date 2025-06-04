@@ -1,18 +1,21 @@
 package com.example.sweety8note.android;
 
+import android.Manifest;
 import android.os.Bundle;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.util.Log;
+
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.example.sweety8note.Sweety8NoteGame;
 import com.example.sweety8note.MicrophoneInput;
 
-/**
- * 启动Android应用并实现麦克风输入功能
- */
 public class AndroidLauncher extends AndroidApplication implements MicrophoneInput {
 
     private AudioRecord audioRecord;
@@ -24,11 +27,17 @@ public class AndroidLauncher extends AndroidApplication implements MicrophoneInp
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 启动录音
+        // 动态请求权限
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                new String[]{android.Manifest.permission.RECORD_AUDIO}, 1);
+        }
+
         startRecording();
 
         Sweety8NoteGame game = new Sweety8NoteGame();
-        game.setMicrophoneInput(this); // 把自己传过去
+        game.setMicrophoneInput(this);
         initialize(game, new AndroidApplicationConfiguration());
     }
 
@@ -38,6 +47,16 @@ public class AndroidLauncher extends AndroidApplication implements MicrophoneInp
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT);
 
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    Activity#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for Activity#requestPermissions for more details.
+            return;
+        }
         audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
             sampleRate,
             AudioFormat.CHANNEL_IN_MONO,
@@ -58,6 +77,9 @@ public class AndroidLauncher extends AndroidApplication implements MicrophoneInp
                     }
                     double rms = Math.sqrt(sum / (double) read);
                     currentVolume = (float) rms;
+
+                    // 打印调试音量值
+                    Log.d("🎤MIC_VOLUME", "当前音量：" + currentVolume);
                 }
             }
         });
@@ -79,6 +101,3 @@ public class AndroidLauncher extends AndroidApplication implements MicrophoneInp
         super.onDestroy();
     }
 }
-
-
-
