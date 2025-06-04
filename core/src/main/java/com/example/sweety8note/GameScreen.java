@@ -49,8 +49,10 @@ public class GameScreen implements Screen {
 
         // 绘制画面
         game.batch.begin();
-        game.batch.draw(backgroundTexture, 0, 0);
-        game.batch.draw(birdTexture, 100, birdY);
+        game.batch.draw(backgroundTexture, 0, 0,
+            Gdx.graphics.getWidth(),
+            Gdx.graphics.getHeight());
+        game.batch.draw(birdTexture, 100, birdY, 64, 64); // 根据你的图片比例适当调整
         game.batch.end();
     }
 
