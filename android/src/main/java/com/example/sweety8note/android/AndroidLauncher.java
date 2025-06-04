@@ -1,20 +1,20 @@
 package com.example.sweety8note.android;
 
 import android.Manifest;
-import android.os.Bundle;
+import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 
-import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
-import com.example.sweety8note.Sweety8NoteGame;
 import com.example.sweety8note.MicrophoneInput;
+import com.example.sweety8note.Sweety8NoteGame;
 
 public class AndroidLauncher extends AndroidApplication implements MicrophoneInput {
 
@@ -27,14 +27,17 @@ public class AndroidLauncher extends AndroidApplication implements MicrophoneInp
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 动态请求权限
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                new String[]{android.Manifest.permission.RECORD_AUDIO}, 1);
+        // Android 6.0+ 动态请求权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 1);
+            } else {
+                startRecording();
+            }
+        } else {
+            startRecording(); // Android 6 以下不需要动态权限
         }
-
-        startRecording();
 
         Sweety8NoteGame game = new Sweety8NoteGame();
         game.setMicrophoneInput(this);
@@ -47,14 +50,14 @@ public class AndroidLauncher extends AndroidApplication implements MicrophoneInp
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT);
 
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
-            //    Activity#requestPermissions
+            //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
             //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
-            // for Activity#requestPermissions for more details.
+            // for ActivityCompat#requestPermissions for more details.
             return;
         }
         audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
@@ -78,8 +81,8 @@ public class AndroidLauncher extends AndroidApplication implements MicrophoneInp
                     double rms = Math.sqrt(sum / (double) read);
                     currentVolume = (float) rms;
 
-                    // 打印调试音量值
-                    Log.d("🎤MIC_VOLUME", "当前音量：" + currentVolume);
+                    // 输出音量日志（调试用）
+                    Log.d("MIC_VOLUME", "Volume: " + currentVolume);
                 }
             }
         });
@@ -99,5 +102,18 @@ public class AndroidLauncher extends AndroidApplication implements MicrophoneInp
             audioRecord.release();
         }
         super.onDestroy();
+    }
+
+    // 动态权限回调
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startRecording();
+            } else {
+                Log.w("PERMISSION", "用户拒绝了麦克风权限");
+            }
+        }
     }
 }
