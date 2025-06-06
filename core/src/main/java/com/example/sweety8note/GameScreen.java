@@ -7,6 +7,11 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.math.Rectangle;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Random;
 
 public class GameScreen implements Screen {
     final Sweety8NoteGame game;
@@ -15,6 +20,7 @@ public class GameScreen implements Screen {
     private Texture birdCloseTexture;
     private Texture backgroundTexture;
     private Texture groundTexture;
+    private Texture obstacleTexture;
 
     private float birdX = 100;
     private float birdY;
@@ -26,6 +32,19 @@ public class GameScreen implements Screen {
 
     private float groundHeight;
     private float screenHeight;
+    private float screenWidth;
+
+    private boolean isGameOver = false;
+
+    // 障碍物列表
+    private ArrayList<Rectangle> obstacles;
+    private float obstacleSpawnTimer = 0;
+    private final float OBSTACLE_SPAWN_INTERVAL = 2.5f; // 每隔 2.5 秒出现一个
+    private final float OBSTACLE_WIDTH = 80;
+    private final float OBSTACLE_HEIGHT = 120;
+    private final float OBSTACLE_SPEED = 200; // 每秒移动速度
+
+    private Random random;
 
     public GameScreen(Sweety8NoteGame game) {
         this.game = game;
@@ -34,6 +53,7 @@ public class GameScreen implements Screen {
         birdCloseTexture = new Texture("bird1close.png");
         backgroundTexture = new Texture("background.png");
         groundTexture = new Texture("ground.png");
+        obstacleTexture = new Texture("obstacle.png"); // 你需要添加这张图
 
         font = new BitmapFont();
         font.getData().setScale(2f);
@@ -41,76 +61,97 @@ public class GameScreen implements Screen {
         layout = new GlyphLayout();
 
         screenHeight = Gdx.graphics.getHeight();
+        screenWidth = Gdx.graphics.getWidth();
         groundHeight = screenHeight / 6f;
-        birdY = groundHeight; // 鸟出生在地面上
-    }
+        birdY = groundHeight;
 
-    @Override
-    public void show() {}
+        obstacles = new ArrayList<>();
+        random = new Random();
+    }
 
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(1, 1, 1, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        float volume = game.micInput != null ? game.micInput.getVolume() : 0;
+        if (!isGameOver) {
+            float volume = game.micInput != null ? game.micInput.getVolume() : 0;
+            boolean isFlying = false;
 
-        boolean isFlying = false;
-        if (volume > 1000) {
-            birdVelocity = 8f;
-            isFlying = true;
+            if (volume > 1000) {
+                birdVelocity = 8f;
+                isFlying = true;
+            }
+
+            birdVelocity += gravity;
+            birdY += birdVelocity;
+
+            // 边界限制
+            if (birdY < groundHeight) {
+                birdY = groundHeight;
+                birdVelocity = 0;
+            }
+            if (birdY + 128 > screenHeight) {
+                birdY = screenHeight - 128;
+                birdVelocity = 0;
+            }
+
+            // 更新障碍物
+            updateObstacles(delta);
+
+            // 检查碰撞
+            Rectangle birdRect = new Rectangle(birdX, birdY, 128, 128);
+            for (Rectangle obstacle : obstacles) {
+                if (birdRect.overlaps(obstacle)) {
+                    isGameOver = true;
+                    Gdx.app.log("GAME", "游戏结束：小鸟撞上障碍物！");
+                }
+            }
+
+            // 渲染
+            Texture currentBirdTexture = isFlying ? birdOpenTexture : birdCloseTexture;
+
+            game.batch.begin();
+            game.batch.draw(backgroundTexture, 0, 0, screenWidth, screenHeight);
+            game.batch.draw(groundTexture, 0, 0, screenWidth, groundHeight);
+
+            // 障碍物
+            for (Rectangle obstacle : obstacles) {
+                game.batch.draw(obstacleTexture, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            }
+
+            game.batch.draw(currentBirdTexture, birdX, birdY, 128, 128);
+
+            // 显示音量
+            String volumeText = String.format("Volume: %.1f", volume);
+            layout.setText(font, volumeText);
+            font.draw(game.batch, layout, 20, screenHeight - 20);
+            game.batch.end();
         }
-
-        birdVelocity += gravity;
-        birdY += birdVelocity;
-
-        // 限制鸟不能落到地面以下
-        if (birdY < groundHeight) {
-            birdY = groundHeight;
-            birdVelocity = 0;
-        }
-
-        // 限制鸟不能飞到屏幕之外
-        if (birdY + 64 > screenHeight) {
-            birdY = screenHeight - 64;
-            birdVelocity = 0;
-        }
-
-        // 选择贴图
-        Texture currentBirdTexture = isFlying ? birdOpenTexture : birdCloseTexture;
-
-        game.batch.begin();
-
-        // 背景
-        game.batch.draw(backgroundTexture, 0, 0,
-            Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-
-        // 地面贴图，放在最下方
-        game.batch.draw(groundTexture, 0, 0,
-            Gdx.graphics.getWidth(), groundHeight);
-
-        // 小鸟贴图
-        game.batch.draw(currentBirdTexture, birdX, birdY, 128, 128);
-
-        // 显示音量
-        String volumeText = String.format("Volume: %.1f", volume);
-        layout.setText(font, volumeText);
-        font.draw(game.batch, layout, 20, screenHeight - 20);
-
-        game.batch.end();
     }
 
-    @Override
-    public void resize(int width, int height) {}
+    private void updateObstacles(float delta) {
+        obstacleSpawnTimer += delta;
 
-    @Override
-    public void pause() {}
+        if (obstacleSpawnTimer >= OBSTACLE_SPAWN_INTERVAL) {
+            float y = groundHeight;
+            Rectangle obstacle = new Rectangle(screenWidth, y, OBSTACLE_WIDTH, OBSTACLE_HEIGHT);
+            obstacles.add(obstacle);
+            obstacleSpawnTimer = 0;
+        }
 
-    @Override
-    public void resume() {}
+        // 移动障碍物
+        Iterator<Rectangle> iter = obstacles.iterator();
+        while (iter.hasNext()) {
+            Rectangle ob = iter.next();
+            ob.x -= OBSTACLE_SPEED * delta;
 
-    @Override
-    public void hide() {}
+            // 移除屏幕外的障碍物
+            if (ob.x + OBSTACLE_WIDTH < 0) {
+                iter.remove();
+            }
+        }
+    }
 
     @Override
     public void dispose() {
@@ -118,6 +159,14 @@ public class GameScreen implements Screen {
         birdCloseTexture.dispose();
         backgroundTexture.dispose();
         groundTexture.dispose();
+        obstacleTexture.dispose();
         font.dispose();
     }
+
+    // 其他方法保持不变
+    @Override public void resize(int width, int height) {}
+    @Override public void pause() {}
+    @Override public void resume() {}
+    @Override public void show() {}
+    @Override public void hide() {}
 }
