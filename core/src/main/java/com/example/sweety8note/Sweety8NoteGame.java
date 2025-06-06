@@ -11,8 +11,9 @@ public class Sweety8NoteGame extends Game {
     @Override
     public void create() {
         batch = new SpriteBatch();
-        this.setScreen(new GameScreen(this));
+        this.setScreen(new MainMenuScreen(this)); // 👈 进入主菜单
     }
+
 
     public void setMicrophoneInput(MicrophoneInput input) {
         this.micInput = input;

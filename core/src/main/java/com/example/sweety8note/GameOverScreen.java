@@ -40,7 +40,7 @@ public class GameOverScreen implements Screen {
         game.batch.end();
 
         if (Gdx.input.justTouched()) {
-            game.setScreen(new GameScreen(game));
+            game.setScreen(new MainMenuScreen(game)); // 👈 回到主菜单
         }
     }
 
