@@ -90,7 +90,7 @@ public class GameScreen implements Screen {
             Gdx.graphics.getWidth(), groundHeight);
 
         // 小鸟贴图
-        game.batch.draw(currentBirdTexture, birdX, birdY, 64, 64);
+        game.batch.draw(currentBirdTexture, birdX, birdY, 128, 128);
 
         // 显示音量
         String volumeText = String.format("Volume: %.1f", volume);
