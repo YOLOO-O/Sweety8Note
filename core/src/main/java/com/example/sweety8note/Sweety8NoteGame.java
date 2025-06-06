@@ -11,7 +11,7 @@ public class Sweety8NoteGame extends Game {
     @Override
     public void create() {
         batch = new SpriteBatch();
-        this.setScreen(new MainMenuScreen(this)); // 👈 进入主菜单
+        this.setScreen(new LoginScreen(this));  // 启动登录界面
     }
 
 

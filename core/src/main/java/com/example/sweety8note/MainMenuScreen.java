@@ -2,82 +2,102 @@ package com.example.sweety8note;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
 public class MainMenuScreen implements Screen {
     final Sweety8NoteGame game;
-
+    private Stage stage;
     private Texture background;
-    private BitmapFont font;
-    private GlyphLayout layout;
 
-    private Rectangle startButtonBounds;
-    private Rectangle exitButtonBounds;
-
-    public MainMenuScreen(Sweety8NoteGame game) {
+    public MainMenuScreen(final Sweety8NoteGame game) {
         this.game = game;
+        stage = new Stage(new ScreenViewport());
+        Gdx.input.setInputProcessor(stage);
 
-        background = new Texture("mainmenu.png");
+        try {
+            background = new Texture("mainmenu.png");
+            System.out.println("背景图片加载成功！");
+        } catch (Exception e) {
+            System.out.println("背景图片加载失败！");
+            background = new Texture("white_pixel.png");  // 用白图代替
+        }
 
-        font = new BitmapFont();
-        font.getData().setScale(5f);
-        font.setColor(Color.BLACK);
+        BitmapFont font = new BitmapFont();
+        font.getData().setScale(2f);
 
-        layout = new GlyphLayout();
+        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
+        buttonStyle.font = font;
+        buttonStyle.fontColor = Color.WHITE;
 
-        float buttonWidth = 300;
-        float buttonHeight = 100;
-        float centerX = Gdx.graphics.getWidth() / 2f - buttonWidth / 2;
+        try {
+            Texture up = new Texture("button_up.png");
+            Texture down = new Texture("button_down.png");
+            buttonStyle.up = new TextureRegionDrawable(new TextureRegion(up));
+            buttonStyle.down = new TextureRegionDrawable(new TextureRegion(down));
+        } catch (Exception e) {
+            System.out.println("按钮图像加载失败，使用默认颜色！");
+            Texture white = new Texture("white_pixel.png");
+            buttonStyle.up = new TextureRegionDrawable(new TextureRegion(white)).tint(Color.DARK_GRAY);
+            buttonStyle.down = new TextureRegionDrawable(new TextureRegion(white)).tint(Color.GRAY);
+        }
 
-        startButtonBounds = new Rectangle(centerX, 400, buttonWidth, buttonHeight);
-        exitButtonBounds = new Rectangle(centerX, 250, buttonWidth, buttonHeight);
-    }
+        TextButton startButton = new TextButton("Start", buttonStyle);
+        TextButton exitButton = new TextButton("Exit", buttonStyle);
 
-    @Override
-    public void render(float delta) {
-        Gdx.gl.glClearColor(1, 1, 1, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Table table = new Table();
+        table.setFillParent(true);
+        table.center();
+        table.add(startButton).padBottom(10).row();
+        table.add(exitButton);
+        stage.addActor(table);
 
-        game.batch.begin();
-        game.batch.draw(background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-
-        layout.setText(font, "START");
-        font.draw(game.batch, layout,
-            startButtonBounds.x + (startButtonBounds.width - layout.width) / 2,
-            startButtonBounds.y + layout.height + 20);
-
-        layout.setText(font, "EXIT");
-        font.draw(game.batch, layout,
-            exitButtonBounds.x + (exitButtonBounds.width - layout.width) / 2,
-            exitButtonBounds.y + layout.height + 20);
-
-        game.batch.end();
-
-        if (Gdx.input.justTouched()) {
-            float touchX = Gdx.input.getX();
-            float touchY = Gdx.graphics.getHeight() - Gdx.input.getY();
-
-            if (startButtonBounds.contains(touchX, touchY)) {
+        startButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                System.out.println("Start按钮点击，进入GameScreen！");
                 game.setScreen(new GameScreen(game));
-            } else if (exitButtonBounds.contains(touchX, touchY)) {
+            }
+        });
+
+        exitButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                System.out.println("退出按钮点击！");
                 Gdx.app.exit();
             }
-        }
-    }
-
-    @Override public void dispose() {
-        background.dispose();
-        font.dispose();
+        });
     }
 
     @Override public void show() {}
-    @Override public void hide() {}
-    @Override public void resize(int width, int height) {}
+
+    @Override
+    public void render(float delta) {
+        game.batch.begin();
+        game.batch.draw(background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        game.batch.end();
+
+        stage.act(delta);
+        stage.draw();
+    }
+
+    @Override public void resize(int width, int height) {
+        stage.getViewport().update(width, height, true);
+    }
+
     @Override public void pause() {}
     @Override public void resume() {}
+    @Override public void hide() {}
+    @Override public void dispose() {
+        stage.dispose();
+        background.dispose();
+    }
 }
