@@ -2,6 +2,8 @@ package com.example.sweety8note;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -37,6 +39,11 @@ public class GameScreen implements Screen {
 
     private boolean isGameOver = false;
 
+    // === 新增音效变量 ===
+    private Sound hitSound;
+    private Sound flapSound;
+    private Music bgmMusic;
+
     private class Obstacle {
         Rectangle rect;
         Texture texture;
@@ -49,9 +56,9 @@ public class GameScreen implements Screen {
 
     private ArrayList<Obstacle> obstacles = new ArrayList<>();
     private float obstacleSpawnTimer = 0;
-    private final float OBSTACLE_SPAWN_INTERVAL = 3.75f; // 障碍物生成间隔
+    private final float OBSTACLE_SPAWN_INTERVAL = 3.75f;
     private final float OBSTACLE_WIDTH = 120;
-    private final float OBSTACLE_SPEED = 200; // 障碍物移动速度
+    private final float OBSTACLE_SPEED = 200;
 
     private Random random;
 
@@ -76,6 +83,14 @@ public class GameScreen implements Screen {
         birdY = groundHeight;
 
         random = new Random();
+
+        // === 初始化音效 ===
+        hitSound = Gdx.audio.newSound(Gdx.files.internal("hit.wav"));
+        flapSound = Gdx.audio.newSound(Gdx.files.internal("flap.wav"));
+        bgmMusic = Gdx.audio.newMusic(Gdx.files.internal("bgm.wav"));
+        bgmMusic.setLooping(true);
+        bgmMusic.setVolume(0.5f); // 可根据需要调整音量
+        bgmMusic.play();
     }
 
     @Override
@@ -90,6 +105,9 @@ public class GameScreen implements Screen {
             if (volume > 1000) {
                 birdVelocity = 8f;
                 isFlying = true;
+
+                // === 播放小鸟飞行音效 ===
+                flapSound.play(0.3f); // 设置飞行声音音量
             }
 
             birdVelocity += gravity;
@@ -110,6 +128,11 @@ public class GameScreen implements Screen {
             for (Obstacle ob : obstacles) {
                 if (birdRect.overlaps(ob.rect)) {
                     Gdx.app.log("GAME", "游戏结束：小鸟撞上障碍物！");
+
+                    // === 播放碰撞音效 ===
+                    hitSound.play(1.0f);
+
+                    bgmMusic.stop(); // 停止背景音乐
                     game.setScreen(new GameOverScreen(game));
                     return;
                 }
@@ -141,8 +164,7 @@ public class GameScreen implements Screen {
             obstacleSpawnTimer = 0;
 
             Texture chosenTexture = random.nextBoolean() ? obstacleTreeTexture : obstacleHouseTexture;
-
-            int scale = 1 + random.nextInt(4); // 1 ~ 4
+            int scale = 1 + random.nextInt(4);
             float obstacleHeight = 128 * scale;
 
             Rectangle rect = new Rectangle(screenWidth, groundHeight, OBSTACLE_WIDTH, obstacleHeight);
@@ -168,6 +190,11 @@ public class GameScreen implements Screen {
         obstacleTreeTexture.dispose();
         obstacleHouseTexture.dispose();
         font.dispose();
+
+        // === 释放音效资源 ===
+        hitSound.dispose();
+        flapSound.dispose();
+        bgmMusic.dispose();
     }
 
     @Override public void resize(int width, int height) {}
