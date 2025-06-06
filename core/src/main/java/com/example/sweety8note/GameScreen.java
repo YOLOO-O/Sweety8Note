@@ -50,7 +50,7 @@ public class GameScreen implements Screen {
     private ArrayList<Obstacle> obstacles = new ArrayList<>();
     private float obstacleSpawnTimer = 0;
     private final float OBSTACLE_SPAWN_INTERVAL = 3.75f; // 障碍物生成间隔
-    private final float OBSTACLE_WIDTH = 80;
+    private final float OBSTACLE_WIDTH = 120;
     private final float OBSTACLE_SPEED = 200; // 障碍物移动速度
 
     private Random random;
