@@ -15,7 +15,7 @@ public class GameOverScreen implements Screen {
     public GameOverScreen(Sweety8NoteGame game) {
         this.game = game;
         font = new BitmapFont();
-        font.getData().setScale(3f);
+        font.getData().setScale(6f);
         font.setColor(Color.RED);
         layout = new GlyphLayout();
     }
