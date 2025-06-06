@@ -103,8 +103,9 @@ public class GameScreen implements Screen {
             Rectangle birdRect = new Rectangle(birdX, birdY, 128, 128);
             for (Rectangle obstacle : obstacles) {
                 if (birdRect.overlaps(obstacle)) {
-                    isGameOver = true;
                     Gdx.app.log("GAME", "游戏结束：小鸟撞上障碍物！");
+                    game.setScreen(new GameOverScreen(game)); // 切换到游戏结束界面
+                    return; // 不再继续渲染
                 }
             }
 
