@@ -34,7 +34,7 @@ public class MainMenuScreen implements Screen {
 
         /* ---------- 按钮纹理 ---------- */
         startUpTex = new Texture("start.png"); // 使用你的按钮素材
-        startDownTex = new Texture("start.png"); // 可以使用同一张图
+        startDownTex = new Texture("start.png"); // 使用同一张图
         exitUpTex = new Texture("quit.png");
         exitDownTex = new Texture("quit.png");
 
@@ -54,9 +54,10 @@ public class MainMenuScreen implements Screen {
         startBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent e, float x, float y) {
-                game.setScreen(new GameScreen(game));
+                game.setScreen(new CharacterSelectionScreen(game)); // 修改为角色选择屏幕
             }
         });
+
         exitBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent e, float x, float y) {

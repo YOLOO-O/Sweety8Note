@@ -62,15 +62,62 @@ public class GameScreen implements Screen {
 
     private Random random;
 
-    public GameScreen(Sweety8NoteGame game) {
-        this.game = game;
+    // 新增角色和地图参数
+    private String selectedCharacter;
+    private String selectedMap;
 
-        birdOpenTexture = new Texture("bird1open.png");
-        birdCloseTexture = new Texture("bird1close.png");
-        backgroundTexture = new Texture("background.png");
+    // 修改构造函数接收角色和地图
+    public GameScreen(Sweety8NoteGame game, String selectedCharacter, String selectedMap, String[] obstacles) {
+        this.game = game;
+        this.selectedCharacter = selectedCharacter;
+        this.selectedMap = selectedMap;
+
+        // 根据角色选择不同的纹理
+        switch (selectedCharacter) {
+            case "Character 1":
+                birdOpenTexture = new Texture("kobe.png");
+                birdCloseTexture = new Texture("kobe.png");
+                break;
+            case "Character 2":
+                birdOpenTexture = new Texture("cat.png");
+                birdCloseTexture = new Texture("cat.png");
+                break;
+            case "Character 3":
+                birdOpenTexture = new Texture("bird1open.png");
+                birdCloseTexture = new Texture("bird1close.png");
+                break;
+            default:
+                // 默认角色或异常处理
+                birdOpenTexture = new Texture("bird1open.png");
+                birdCloseTexture = new Texture("bird1close.png");
+                break;
+        }
+
+        // 根据地图选择不同的背景
+        switch (selectedMap) {
+            case "Map 1":
+                backgroundTexture = new Texture("background.png");
+                break;
+            case "Map 2":
+                backgroundTexture = new Texture("Hell.jpg");
+                break;
+            case "Map 3":
+                backgroundTexture = new Texture("house.jpg");
+                break;
+            default:
+                // 默认背景或异常处理
+                backgroundTexture = new Texture("background.png");
+                break;
+        }
+
         groundTexture = new Texture("ground.png");
         obstacleTreeTexture = new Texture("obstacle_tree.png");
         obstacleHouseTexture = new Texture("obstacle_house.png");
+
+        // 将障碍物加载
+        for (String obstacle : obstacles) {
+            // 创建障碍物的逻辑，您可以根据具体需求操作
+        }
 
         font = new BitmapFont();
         font.getData().setScale(2f);
@@ -102,6 +149,7 @@ public class GameScreen implements Screen {
             float volume = game.micInput != null ? game.micInput.getVolume() : 0;
             boolean isFlying = false;
 
+            // 向上飞行
             if (volume > 1000) {
                 birdVelocity = 8f;
                 isFlying = true;
@@ -113,6 +161,7 @@ public class GameScreen implements Screen {
             birdVelocity += gravity;
             birdY += birdVelocity;
 
+            // 控制鸟的垂直位置
             if (birdY < groundHeight) {
                 birdY = groundHeight;
                 birdVelocity = 0;
@@ -140,16 +189,20 @@ public class GameScreen implements Screen {
 
             Texture currentBirdTexture = isFlying ? birdOpenTexture : birdCloseTexture;
 
+            // 绘制游戏内容
             game.batch.begin();
             game.batch.draw(backgroundTexture, 0, 0, screenWidth, screenHeight);
             game.batch.draw(groundTexture, 0, 0, screenWidth, groundHeight);
 
+            // 绘制障碍物
             for (Obstacle ob : obstacles) {
                 game.batch.draw(ob.texture, ob.rect.x, ob.rect.y, ob.rect.width, ob.rect.height);
             }
 
+            // 绘制小鸟
             game.batch.draw(currentBirdTexture, birdX, birdY, 128, 128);
 
+            // 显示音量
             String volumeText = String.format("Volume: %.1f", volume);
             layout.setText(font, volumeText);
             font.draw(game.batch, layout, 20, screenHeight - 20);
@@ -157,6 +210,7 @@ public class GameScreen implements Screen {
         }
     }
 
+    // 更新障碍物
     private void updateObstacles(float delta) {
         obstacleSpawnTimer += delta;
 
@@ -171,6 +225,7 @@ public class GameScreen implements Screen {
             obstacles.add(new Obstacle(rect, chosenTexture));
         }
 
+        // 更新障碍物位置
         Iterator<Obstacle> iter = obstacles.iterator();
         while (iter.hasNext()) {
             Obstacle ob = iter.next();
@@ -197,6 +252,7 @@ public class GameScreen implements Screen {
         bgmMusic.dispose();
     }
 
+    // 其他未重写的方法
     @Override public void resize(int width, int height) {}
     @Override public void pause() {}
     @Override public void resume() {}
