@@ -24,4 +24,10 @@ public class Sweety8NoteGame extends Game {
         batch.dispose();
         super.dispose();
     }
+
+
+    // 确保这个方法存在
+    public SpriteBatch getBatch() {
+        return batch;
+    }
 }
