@@ -39,7 +39,7 @@ public class MapSelectionScreen implements Screen {
         hellBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new GameScreen(game, selectedCharacter, "Map 1", hellObstacles));
+                game.setScreen(new GameScreen(game, selectedCharacter, "Hell", hellObstacles));
             }
         });
 
